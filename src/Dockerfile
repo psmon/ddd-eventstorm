@@ -1,5 +1,5 @@
 # Node.js 18 Alpine 이미지 사용 (경량화)
-FROM node:18-alpine
+FROM node:24.2.0-alpine
 
 # 작업 디렉토리 설정
 WORKDIR /app

@@ -8,6 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>
     <script src="https://unpkg.com/panzoom@9.4.3/dist/panzoom.min.js"></script>
+    <% if (typeof shareData !== 'undefined' && shareData) { %>
+    <script>
+        window.sharedAnalysisData = <%- JSON.stringify(shareData) %>;
+    </script>
+    <% } %>
 </head>
 <body>
     <div class="container">
@@ -25,6 +30,13 @@
         </div>
 
         <div id="resultSection" class="result-section" style="display: none;">
+            <div class="share-section">
+                <button id="shareBtn" class="share-btn" onclick="shareAnalysis()">🔗 공유하기</button>
+                <div id="shareResult" class="share-result" style="display: none;">
+                    <input type="text" id="shareLink" readonly>
+                    <button onclick="copyShareLink()">복사</button>
+                </div>
+            </div>
             <div class="event-storming-section">
                 <h2>Event Storming</h2>
                 <div class="diagram-controls">

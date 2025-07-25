@@ -308,3 +308,51 @@ h2 {
     overflow-x: auto;
     margin-top: 10px;
 }
+.share-section {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.share-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.share-btn:hover {
+    background-color: #45a049;
+}
+
+.share-result {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.share-result input {
+    width: 300px;
+    padding: 5px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.share-result button {
+    padding: 5px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.share-result button:hover {
+    background-color: #0056b3;
+}

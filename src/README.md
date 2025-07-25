@@ -65,6 +65,11 @@ docker build -t devtool-registry.lunacode.dev/ddd-event-storming .
 docker push devtool-registry.lunacode.dev/ddd-event-storming
 ```
 
+3. Docker 컨테이너 실행
+```bash
+docker run -p 3000:3000 --env-file .env devtool-registry.lunacode.dev/ddd-event-storming
+```
+
 ## 🎯 사용 방법
 
 1. PRD 내용을 텍스트 영역에 입력

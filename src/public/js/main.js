@@ -1,6 +1,9 @@
 // Mermaid 초기화 (mermaidConfig.js에서 설정 사용)
 mermaid.initialize(mermaidConfig);
 
+// 분석 결과 저장용 전역 변수
+let currentAnalysisData = null;
+
 async function analyzePRD() {
     const prdInput = document.getElementById('prdInput').value.trim();
     
@@ -31,6 +34,15 @@ async function analyzePRD() {
         }
 
         const data = await response.json();
+        
+        // 분석 결과 저장
+        currentAnalysisData = {
+            prdText: prdInput,
+            eventStormingData: data.eventStorming,
+            mermaidDiagram: data.eventStorming.diagram,
+            discussions: data.discussion,
+            exampleMappingData: data.exampleMapping
+        };
         
         displayEventStorming(data.eventStorming);
         displayDiscussion(data.discussion);
@@ -176,5 +188,98 @@ function displayExampleMapping(exampleMapping) {
 window.addEventListener('resize', () => {
     if (eventStormingBoard) {
         eventStormingBoard.resize();
+    }
+});
+
+// 공유 기능 함수들
+async function shareAnalysis() {
+    if (!currentAnalysisData) {
+        alert('공유할 분석 결과가 없습니다.');
+        return;
+    }
+
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn.disabled = true;
+    shareBtn.textContent = '공유 링크 생성 중...';
+
+    try {
+        const response = await fetch('/api/share', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(currentAnalysisData),
+        });
+
+        if (!response.ok) {
+            throw new Error('공유 링크 생성에 실패했습니다.');
+        }
+
+        const { shareUrl } = await response.json();
+        
+        document.getElementById('shareLink').value = shareUrl;
+        document.getElementById('shareResult').style.display = 'block';
+        
+        shareBtn.textContent = '🔗 새 링크 생성';
+    } catch (error) {
+        alert(error.message);
+        shareBtn.textContent = '🔗 공유하기';
+    } finally {
+        shareBtn.disabled = false;
+    }
+}
+
+function copyShareLink() {
+    const shareLink = document.getElementById('shareLink');
+    shareLink.select();
+    shareLink.setSelectionRange(0, 99999); // 모바일 지원
+    
+    try {
+        document.execCommand('copy');
+        
+        const copyBtn = event.target;
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = '✅ 복사됨!';
+        
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+        }, 2000);
+    } catch (err) {
+        alert('복사에 실패했습니다. 직접 선택하여 복사해주세요.');
+    }
+}
+
+// 공유된 데이터로 초기화
+window.addEventListener('DOMContentLoaded', () => {
+    if (window.sharedAnalysisData) {
+        const data = window.sharedAnalysisData;
+        
+        // PRD 텍스트 표시
+        document.getElementById('prdInput').value = data.prdText;
+        
+        // 분석 결과 표시
+        displayEventStorming(data.eventStormingData);
+        displayDiscussion(data.discussions);
+        displayExampleMapping(data.exampleMappingData);
+        
+        // 결과 섹션 표시
+        document.getElementById('resultSection').style.display = 'block';
+        
+        // Event Storming Board 초기화
+        if (!eventStormingBoard) {
+            eventStormingBoard = new EventStormingBoard('eventStormingBoard');
+        }
+        eventStormingBoard.displayEventStorming(data.eventStormingData);
+        
+        // 현재 분석 데이터 저장
+        currentAnalysisData = data;
+        
+        // 입력 필드 읽기 전용으로 설정
+        document.getElementById('prdInput').readOnly = true;
+        document.getElementById('analyzeBtn').style.display = 'none';
+        
+        // 공유 모드 표시
+        const h1 = document.querySelector('h1');
+        h1.innerHTML += ' <span style="color: #4CAF50; font-size: 0.8em;">(공유된 분석)</span>';
     }
 });
