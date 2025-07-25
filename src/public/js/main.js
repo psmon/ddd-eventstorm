@@ -4,6 +4,54 @@ mermaid.initialize(mermaidConfig);
 // 분석 결과 저장용 전역 변수
 let currentAnalysisData = null;
 
+// 진행 상황 업데이트 함수
+function updateProgressUI(progress) {
+    console.log('Progress update:', progress); // 디버깅용
+    
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const progressSteps = document.querySelectorAll('.progress-step');
+    
+    // 진행률 바 업데이트 (애니메이션 효과)
+    requestAnimationFrame(() => {
+        progressFill.style.width = `${progress.percentage}%`;
+        progressFill.textContent = `${progress.percentage}%`;
+    });
+    
+    // 진행 상황 텍스트 업데이트
+    progressText.textContent = progress.description;
+    
+    // 단계별 상태 업데이트
+    progressSteps.forEach((step, index) => {
+        const stepNumber = index + 1;
+        
+        // 타임아웃을 사용하여 순차적 애니메이션 효과
+        setTimeout(() => {
+            if (stepNumber < progress.step) {
+                step.classList.remove('active');
+                step.classList.add('completed');
+            } else if (stepNumber === progress.step) {
+                step.classList.add('active');
+                step.classList.remove('completed');
+            } else {
+                step.classList.remove('active', 'completed');
+            }
+        }, stepNumber * 50);
+    });
+}
+
+// 진행 상황 초기화
+function resetProgress() {
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const progressSteps = document.querySelectorAll('.progress-step');
+    
+    progressFill.style.width = '0%';
+    progressFill.textContent = '';
+    progressText.textContent = '분석 준비 중...';
+    progressSteps.forEach(step => step.classList.remove('active', 'completed'));
+}
+
 async function analyzePRD() {
     const prdInput = document.getElementById('prdInput').value.trim();
     
@@ -19,21 +67,90 @@ async function analyzePRD() {
     analyzeBtn.disabled = true;
     loadingSpinner.style.display = 'block';
     resultSection.style.display = 'none';
-
-    try {
-        const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prd: prdInput }),
-        });
-
-        if (!response.ok) {
-            throw new Error('분석 중 오류가 발생했습니다.');
+    
+    // 진행 상황 초기화
+    resetProgress();
+    
+    // 고유 클라이언트 ID 생성
+    const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // SSE 연결 설정
+    console.log(`[SSE] Connecting with clientId: ${clientId}`);
+    const eventSource = new EventSource(`/api/analyze/progress/${clientId}`);
+    
+    let sseConnected = false;
+    
+    eventSource.onopen = () => {
+        console.log('[SSE] Connection opened');
+    };
+    
+    eventSource.onmessage = (event) => {
+        console.log('[SSE] Message received:', event.data);
+        try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'connected') {
+                console.log('[SSE] Connected successfully');
+                sseConnected = true;
+                
+                // SSE 연결이 확인되면 분석 시작
+                startAnalysis();
+            } else if (data.type === 'progress') {
+                console.log('[SSE] Progress update:', data);
+                updateProgressUI(data);
+            } else if (data.type === 'complete' || data.type === 'error') {
+                console.log('[SSE] Closing connection:', data.type);
+                eventSource.close();
+            }
+        } catch (error) {
+            console.error('[SSE] Error parsing message:', error);
         }
+    };
+    
+    eventSource.onerror = (error) => {
+        console.error('[SSE] Connection error:', error);
+        eventSource.close();
+        
+        // SSE 연결 실패 시 일반 분석 진행
+        if (!sseConnected) {
+            console.warn('[SSE] Connection failed, proceeding without progress updates');
+            sseConnected = true; // 강제로 설정하여 분석 진행
+            startAnalysis();
+        }
+    };
+    
+    // 3초 후에도 연결이 안 되면 강제로 시작
+    setTimeout(() => {
+        if (!sseConnected) {
+            console.warn('[SSE] Connection timeout, proceeding without progress updates');
+            sseConnected = true;
+            eventSource.close();
+            startAnalysis();
+        }
+    }, 3000);
+    
+    // 분석 시작 함수
+    const startAnalysis = async () => {
+        if (!sseConnected) {
+            console.warn('[SSE] Not connected yet, waiting...');
+            return;
+        }
+        
+        try {
+            console.log('[SSE] Starting analysis request...');
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ prd: prdInput, clientId }),
+            });
 
-        const data = await response.json();
+            if (!response.ok) {
+                throw new Error('분석 중 오류가 발생했습니다.');
+            }
+
+            const data = await response.json();
         
         // 분석 결과 저장
         currentAnalysisData = {
@@ -55,12 +172,31 @@ async function analyzePRD() {
             eventStormingBoard = new EventStormingBoard('eventStormingBoard');
         }
         eventStormingBoard.displayEventStorming(data.eventStorming);
-    } catch (error) {
-        alert(error.message);
-    } finally {
-        analyzeBtn.disabled = false;
-        loadingSpinner.style.display = 'none';
-    }
+        } catch (error) {
+            alert(error.message);
+            eventSource.close();
+        } finally {
+            // 분석 완료 시 모든 단계를 완료 상태로 표시
+            const progressSteps = document.querySelectorAll('.progress-step');
+            progressSteps.forEach(step => {
+                step.classList.remove('active');
+                step.classList.add('completed');
+            });
+            
+            // 진행률 100%로 설정
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            progressFill.style.width = '100%';
+            progressFill.textContent = '100%';
+            progressText.textContent = '분석 완료!';
+            
+            // 1초 후 로딩 스피너 숨기기
+            setTimeout(() => {
+                analyzeBtn.disabled = false;
+                loadingSpinner.style.display = 'none';
+            }, 1000);
+        }
+    };
 }
 
 async function displayEventStorming(eventStorming) {

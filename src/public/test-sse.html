@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSE Progress Test</title>
+</head>
+<body>
+    <h1>SSE Progress Test</h1>
+    <button onclick="testSSE()">Test SSE Connection</button>
+    <div id="log"></div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div>${new Date().toISOString()}: ${message}</div>`;
+        }
+
+        function testSSE() {
+            const clientId = `test_${Date.now()}`;
+            log(`Connecting with clientId: ${clientId}`);
+            
+            // 1. SSE 연결
+            const eventSource = new EventSource(`/api/analyze/progress/${clientId}`);
+            
+            eventSource.onopen = () => {
+                log('SSE connection opened');
+            };
+            
+            eventSource.onmessage = (event) => {
+                log(`SSE message: ${event.data}`);
+            };
+            
+            eventSource.onerror = (error) => {
+                log(`SSE error: ${error}`);
+            };
+            
+            // 2. 1초 후 분석 요청
+            setTimeout(() => {
+                log('Sending analysis request...');
+                fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prd: 'Test PRD content',
+                        clientId: clientId
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    log('Analysis complete');
+                    eventSource.close();
+                })
+                .catch(error => {
+                    log(`Analysis error: ${error}`);
+                    eventSource.close();
+                });
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

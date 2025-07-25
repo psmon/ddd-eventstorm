@@ -26,7 +26,31 @@
 
         <div id="loadingSpinner" class="loading-spinner" style="display: none;">
             <div class="spinner"></div>
-            <p>PRD를 분석 중입니다...</p>
+            <p id="loadingMessage">PRD를 분석 중입니다...</p>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <p id="progressText" class="progress-text">분석 준비 중...</p>
+                <div id="progressSteps" class="progress-steps">
+                    <div class="progress-step" data-step="1">
+                        <div class="step-icon">📋</div>
+                        <div class="step-label">Event Storming</div>
+                    </div>
+                    <div class="progress-step" data-step="2">
+                        <div class="step-icon">📊</div>
+                        <div class="step-label">다이어그램 생성</div>
+                    </div>
+                    <div class="progress-step" data-step="3">
+                        <div class="step-icon">💬</div>
+                        <div class="step-label">토론 생성</div>
+                    </div>
+                    <div class="progress-step" data-step="4">
+                        <div class="step-icon">🗺️</div>
+                        <div class="step-label">Example Mapping</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="resultSection" class="result-section" style="display: none;">

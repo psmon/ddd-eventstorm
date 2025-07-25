@@ -5,9 +5,20 @@ class OpenAIService {
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
         });
+        this.useMock = process.env.USE_MOCK_API === 'true';
+    }
+
+    // 개발 테스트용 모킹 함수
+    async mockDelay(duration = 2000) {
+        if (this.useMock) {
+            await new Promise(resolve => setTimeout(resolve, duration));
+        }
     }
 
     async generateEventStorming(prd) {
+        console.time('generateEventStorming');
+        console.log('[OpenAI] Starting Event Storming generation...');
+        
         const prompt = `
 당신은 Domain-Driven Design(DDD)과 Event Storming 전문가입니다. 
 주어진 PRD(Product Requirement Document)를 분석하여 Event Storming 결과를 생성해주세요.
@@ -38,6 +49,25 @@ ${prd}
 6. flow는 실제 비즈니스 프로세스의 흐름을 정확히 반영해야 함`;
 
         try {
+            // 모킹 모드일 때
+            if (this.useMock) {
+                await this.mockDelay(2000);
+                const mockResult = {
+                    events: ["주문 생성됨", "결제 완료됨", "배송 시작됨"],
+                    commands: ["주문하기", "결제하기", "배송하기"],
+                    actors: ["고객", "관리자"],
+                    policies: ["재고 확인 필요", "결제 승인 필요"],
+                    aggregates: ["주문", "결제", "배송"],
+                    flow: [
+                        {"from": "고객", "to": "주문하기", "type": "executes"},
+                        {"from": "주문하기", "to": "주문 생성됨", "type": "triggers"}
+                    ]
+                };
+                console.log('[OpenAI] Event Storming generation completed (mock)');
+                console.timeEnd('generateEventStorming');
+                return mockResult;
+            }
+
             const response = await this.openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
@@ -48,14 +78,21 @@ ${prd}
                 response_format: { type: "json_object" }
             });
 
-            return JSON.parse(response.choices[0].message.content);
+            const result = JSON.parse(response.choices[0].message.content);
+            console.log('[OpenAI] Event Storming generation completed');
+            console.timeEnd('generateEventStorming');
+            return result;
         } catch (error) {
             console.error('Error generating event storming:', error);
+            console.timeEnd('generateEventStorming');
             throw error;
         }
     }
 
     async generateDiscussion(eventStorming) {
+        console.time('generateDiscussion');
+        console.log('[OpenAI] Starting Discussion generation...');
+        
         const prompt = `
 당신은 소프트웨어 개발팀의 가상 협업자들을 시뮬레이션합니다. 
 다음 Event Storming 결과를 바탕으로 Example Mapping을 위한 토론을 진행해주세요.
@@ -90,14 +127,21 @@ ${JSON.stringify(eventStorming, null, 2)}
                 response_format: { type: "json_object" }
             });
 
-            return JSON.parse(response.choices[0].message.content);
+            const result = JSON.parse(response.choices[0].message.content);
+            console.log('[OpenAI] Discussion generation completed');
+            console.timeEnd('generateDiscussion');
+            return result;
         } catch (error) {
             console.error('Error generating discussion:', error);
+            console.timeEnd('generateDiscussion');
             throw error;
         }
     }
 
     async generateExampleMapping(eventStorming, discussion) {
+        console.time('generateExampleMapping');
+        console.log('[OpenAI] Starting Example Mapping generation...');
+        
         const prompt = `
 Event Storming 결과와 팀 토론을 바탕으로 Example Mapping을 생성해주세요.
 
@@ -132,14 +176,21 @@ ${JSON.stringify(discussion, null, 2)}
                 response_format: { type: "json_object" }
             });
 
-            return JSON.parse(response.choices[0].message.content);
+            const result = JSON.parse(response.choices[0].message.content);
+            console.log('[OpenAI] Example Mapping generation completed');
+            console.timeEnd('generateExampleMapping');
+            return result;
         } catch (error) {
             console.error('Error generating example mapping:', error);
+            console.timeEnd('generateExampleMapping');
             throw error;
         }
     }
 
     async generateMermaidDiagram(eventStormingData) {
+        console.time('generateMermaidDiagram');
+        console.log('[OpenAI] Starting Mermaid Diagram generation...');
+        
         const prompt = `
 Event Storming 데이터를 바탕으로 Mermaid.js 다이어그램을 생성해주세요.
 
@@ -190,9 +241,12 @@ flowchart LR
             });
 
             const result = JSON.parse(response.choices[0].message.content);
+            console.log('[OpenAI] Mermaid Diagram generation completed');
+            console.timeEnd('generateMermaidDiagram');
             return result.diagram;
         } catch (error) {
             console.error('Error generating mermaid diagram:', error);
+            console.timeEnd('generateMermaidDiagram');
             // 오류 발생 시 기본 다이어그램 생성
             return this.generateFallbackDiagram(eventStormingData);
         }

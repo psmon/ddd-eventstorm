@@ -1,18 +1,52 @@
 const openaiService = require('./openaiService');
+const EventEmitter = require('events');
 
-class EventStormingService {
-    async analyzePRD(prd) {
+class EventStormingService extends EventEmitter {
+    async analyzePRD(prd, progressCallback) {
         try {
+            const totalSteps = 4;
+            let currentStep = 0;
+
+            // Progress helper function
+            const updateProgress = (step, description, details = {}) => {
+                const progress = {
+                    step,
+                    totalSteps,
+                    percentage: Math.round((step / totalSteps) * 100),
+                    description,
+                    ...details
+                };
+                
+                if (progressCallback) {
+                    progressCallback(progress);
+                }
+                this.emit('progress', progress);
+            };
+
+            // 0. 분석 시작
+            updateProgress(0, '분석을 시작합니다...', { phase: 'initializing' });
+            
+            // 약간의 지연을 추가하여 UI 업데이트 보장
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             // 1. Event Storming 생성
+            updateProgress(1, 'Event Storming 분석 중...', { phase: 'eventStorming' });
+            await new Promise(resolve => setTimeout(resolve, 100)); // UI 업데이트를 위한 짧은 지연
             const eventStormingData = await openaiService.generateEventStorming(prd);
             
             // 2. Mermaid 다이어그램 생성 (LLM 사용)
+            updateProgress(2, 'Mermaid 다이어그램 생성 중...', { phase: 'diagram' });
+            await new Promise(resolve => setTimeout(resolve, 100));
             const diagram = await openaiService.generateMermaidDiagram(eventStormingData);
             
             // 3. 가상 협업자 토론 생성
+            updateProgress(3, '가상 협업자 토론 생성 중...', { phase: 'discussion' });
+            await new Promise(resolve => setTimeout(resolve, 100));
             const discussionData = await openaiService.generateDiscussion(eventStormingData);
             
             // 4. Example Mapping 생성
+            updateProgress(4, 'Example Mapping 생성 중...', { phase: 'exampleMapping' });
+            await new Promise(resolve => setTimeout(resolve, 100));
             const exampleMapping = await openaiService.generateExampleMapping(
                 eventStormingData, 
                 discussionData
@@ -28,6 +62,7 @@ class EventStormingService {
             };
         } catch (error) {
             console.error('Error in analyzePRD:', error);
+            this.emit('error', error);
             throw error;
         }
     }
