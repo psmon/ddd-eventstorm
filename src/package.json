@@ -1,0 +1,25 @@
+{
+  "name": "event-storming-prd-analyzer",
+  "version": "1.0.0",
+  "description": "PRD to Event Storming and Example Mapping converter",
+  "main": "app.js",
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "openai": "^4.0.0",
+    "body-parser": "^1.20.2",
+    "ejs": "^3.1.9"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

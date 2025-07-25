@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  event-storming:
+    image: devtool-registry.lunacode.dev/ddd-event-storming
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - OPENAI_API_KEY=your_openai_api_key_here
+    restart: unless-stopped
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label: server=labs
