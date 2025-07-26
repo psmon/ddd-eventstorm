@@ -158,12 +158,26 @@ async function analyzePRD() {
             eventStormingData: data.eventStorming,
             mermaidDiagram: data.eventStorming.diagram,
             discussions: data.discussion,
-            exampleMappingData: data.exampleMapping
+            exampleMappingData: data.exampleMapping,
+            ubiquitousLanguageData: data.ubiquitousLanguage,
+            workTicketsData: data.workTickets,
+            milestonesData: data.milestones,
+            timelineData: data.timeline
         };
         
         displayEventStorming(data.eventStorming);
         displayDiscussion(data.discussion);
         displayExampleMapping(data.exampleMapping);
+        
+        // 유비쿼터스 언어 표시
+        if (data.ubiquitousLanguage) {
+            displayUbiquitousLanguage(data.ubiquitousLanguage);
+        }
+
+        // 작업 티켓 및 타임라인 표시
+        if (data.workTickets || data.milestones || data.timeline) {
+            displayWorkTickets(data.workTickets, data.milestones, data.timeline);
+        }
 
         resultSection.style.display = 'block';
         
@@ -320,10 +334,283 @@ function displayExampleMapping(exampleMapping) {
     mappingContainer.innerHTML = mappingHTML;
 }
 
+function displayUbiquitousLanguage(ubiquitousLanguage) {
+    const tableBody = document.getElementById('ubiquitousLanguageTableBody');
+    let tableHTML = '';
+    
+    if (!ubiquitousLanguage || ubiquitousLanguage.length === 0) {
+        tableHTML = `
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
+                    유비쿼터스 언어가 정의되지 않았습니다.
+                </td>
+            </tr>
+        `;
+    } else {
+        ubiquitousLanguage.forEach(term => {
+            tableHTML += `
+                <tr>
+                    <td>${term.boundedContext || '-'}</td>
+                    <td>${term.englishName || '-'}</td>
+                    <td>${term.koreanName || '-'}</td>
+                    <td>${term.description || '-'}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    tableBody.innerHTML = tableHTML;
+}
+
+// 전역 변수로 timeline 인스턴스 저장
+let timeline = null;
+let timelineItems = null;
+let timelineGroups = null;
+
+function displayWorkTickets(workTickets, milestones, timelineData) {
+    // 작업 티켓 카드 렌더링
+    if (workTickets && workTickets.length > 0) {
+        const ticketsContainer = document.getElementById('workTicketsContent');
+        let ticketsHTML = '';
+        
+        workTickets.forEach(ticket => {
+            const priorityClass = `priority-${ticket.priority}`;
+            const tagsHTML = ticket.tags ? ticket.tags.map(tag => `<span class="ticket-tag">${tag}</span>`).join('') : '';
+            
+            ticketsHTML += `
+                <div class="work-ticket-card" data-ticket-id="${ticket.id}">
+                    <div class="ticket-header">
+                        <span class="ticket-id">${ticket.id}</span>
+                        <span class="ticket-priority ${priorityClass}">${ticket.priority.toUpperCase()}</span>
+                    </div>
+                    <h4 class="ticket-title">${ticket.title}</h4>
+                    <p class="ticket-description">${ticket.description}</p>
+                    <div class="ticket-meta">
+                        <div class="ticket-meta-item">
+                            <span>👤</span>
+                            <span>${ticket.assignee}</span>
+                        </div>
+                        <div class="ticket-meta-item">
+                            <span>⏱️</span>
+                            <span>${ticket.estimatedHours}h</span>
+                        </div>
+                        <div class="ticket-meta-item">
+                            <span>🏃</span>
+                            <span>Sprint ${ticket.sprint}</span>
+                        </div>
+                    </div>
+                    <div class="ticket-tags">${tagsHTML}</div>
+                    <div class="ticket-dates">
+                        <span>시작: ${formatDate(ticket.startDate)}</span>
+                        <span>종료: ${formatDate(ticket.endDate)}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        ticketsContainer.innerHTML = ticketsHTML;
+    }
+    
+    // 마일스톤 렌더링
+    if (milestones && milestones.length > 0) {
+        const milestonesContainer = document.getElementById('milestonesContent');
+        let milestonesHTML = '';
+        
+        milestones.forEach(milestone => {
+            milestonesHTML += `
+                <div class="milestone-card">
+                    <h4 class="milestone-title">${milestone.title}</h4>
+                    <div class="milestone-date">📅 ${formatDate(milestone.date)}</div>
+                    <p class="milestone-description">${milestone.description}</p>
+                </div>
+            `;
+        });
+        
+        milestonesContainer.innerHTML = milestonesHTML;
+    }
+    
+    // 타임라인 생성
+    createTimeline(workTickets, milestones, timelineData);
+}
+
+function createTimeline(workTickets, milestones, timelineData) {
+    const container = document.getElementById('timeline');
+    
+    // 아이템 데이터 준비
+    const items = [];
+    
+    // 작업 티켓을 타임라인 아이템으로 변환
+    if (workTickets) {
+        workTickets.forEach(ticket => {
+            items.push({
+                id: ticket.id,
+                content: `<strong>${ticket.id}</strong><br>${ticket.title}`,
+                start: ticket.startDate,
+                end: ticket.endDate,
+                group: ticket.assignee,
+                className: ticket.type,
+                title: `${ticket.title}\n담당: ${ticket.assignee}\n예상: ${ticket.estimatedHours}시간`
+            });
+        });
+    }
+    
+    // 마일스톤을 타임라인 아이템으로 변환
+    if (milestones) {
+        milestones.forEach(milestone => {
+            items.push({
+                id: milestone.id,
+                content: `<strong>🎯 ${milestone.title}</strong>`,
+                start: milestone.date,
+                type: 'point',
+                className: 'milestone',
+                title: milestone.description
+            });
+        });
+    }
+    
+    // 그룹(담당자) 설정
+    const groups = [
+        { id: 'Developer', content: '개발자' },
+        { id: 'QA Engineer', content: 'QA 엔지니어' },
+        { id: 'UX Designer', content: 'UX 디자이너' },
+        { id: 'Product Owner', content: '제품 책임자' }
+    ];
+    
+    // DataSet 생성
+    timelineItems = new vis.DataSet(items);
+    timelineGroups = new vis.DataSet(groups);
+    
+    // 타임라인 옵션
+    const options = {
+        groupOrder: 'content',
+        height: '400px',
+        stack: false,
+        showMajorLabels: true,
+        showCurrentTime: true,
+        zoomMin: 1000 * 60 * 60 * 24,        // 1일
+        zoomMax: 1000 * 60 * 60 * 24 * 365,  // 1년
+        locale: 'ko',
+        tooltip: {
+            followMouse: true,
+            overflowMethod: 'cap'
+        },
+        format: {
+            minorLabels: {
+                minute: 'h:mma',
+                hour: 'ha',
+                weekday: 'ddd D',
+                day: 'D',
+                week: 'w',
+                month: 'MMM',
+                year: 'YYYY'
+            },
+            majorLabels: {
+                minute: 'ddd D MMMM',
+                hour: 'ddd D MMMM',
+                weekday: 'MMMM YYYY',
+                day: 'MMMM YYYY',
+                week: 'MMMM YYYY',
+                month: 'YYYY',
+                year: ''
+            }
+        }
+    };
+    
+    // 타임라인 생성
+    timeline = new vis.Timeline(container, timelineItems, timelineGroups, options);
+    
+    // 타임라인 이벤트 핸들러
+    timeline.on('select', function (properties) {
+        if (properties.items.length > 0) {
+            const selectedId = properties.items[0];
+            const ticketCard = document.querySelector(`[data-ticket-id="${selectedId}"]`);
+            if (ticketCard) {
+                ticketCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                ticketCard.style.animation = 'pulse 0.5s ease-in-out';
+                setTimeout(() => {
+                    ticketCard.style.animation = '';
+                }, 500);
+            }
+        }
+    });
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('ko-KR', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
+// 타임라인 컨트롤 함수들
+function zoomInTimeline() {
+    if (timeline) {
+        const range = timeline.getWindow();
+        const interval = range.end - range.start;
+        const newInterval = interval * 0.5;
+        const center = (range.start.valueOf() + range.end.valueOf()) / 2;
+        timeline.setWindow(center - newInterval / 2, center + newInterval / 2);
+    }
+}
+
+function zoomOutTimeline() {
+    if (timeline) {
+        const range = timeline.getWindow();
+        const interval = range.end - range.start;
+        const newInterval = interval * 2;
+        const center = (range.start.valueOf() + range.end.valueOf()) / 2;
+        timeline.setWindow(center - newInterval / 2, center + newInterval / 2);
+    }
+}
+
+function fitTimeline() {
+    if (timeline) {
+        timeline.fit();
+    }
+}
+
+function toggleTimelineView() {
+    if (timeline) {
+        const currentStack = timeline.options.stack;
+        timeline.setOptions({ stack: !currentStack });
+    }
+}
+
+function filterTimeline() {
+    const filterValue = document.getElementById('timelineFilter').value;
+    
+    if (!timelineItems) return;
+    
+    const allItems = timelineItems.get();
+    let filteredItems = allItems;
+    
+    switch (filterValue) {
+        case 'sprint1':
+            filteredItems = allItems.filter(item => item.group && item.content.includes('Sprint 1'));
+            break;
+        case 'sprint2':
+            filteredItems = allItems.filter(item => item.group && item.content.includes('Sprint 2'));
+            break;
+        case 'high':
+            filteredItems = allItems.filter(item => item.className !== 'milestone' && item.title && item.title.includes('high'));
+            break;
+        case 'feature':
+            filteredItems = allItems.filter(item => item.className === 'feature');
+            break;
+    }
+    
+    timeline.setItems(filteredItems);
+}
+
 // 윈도우 리사이즈 이벤트 처리
 window.addEventListener('resize', () => {
     if (eventStormingBoard) {
         eventStormingBoard.resize();
+    }
+    if (timeline) {
+        timeline.redraw();
     }
 });
 
@@ -397,6 +684,16 @@ window.addEventListener('DOMContentLoaded', () => {
         displayEventStorming(data.eventStormingData);
         displayDiscussion(data.discussions);
         displayExampleMapping(data.exampleMappingData);
+        
+        // 유비쿼터스 언어 표시
+        if (data.ubiquitousLanguageData) {
+            displayUbiquitousLanguage(data.ubiquitousLanguageData);
+        }
+        
+        // 작업 티켓 및 타임라인 표시
+        if (data.workTicketsData || data.milestonesData || data.timelineData) {
+            displayWorkTickets(data.workTicketsData, data.milestonesData, data.timelineData);
+        }
         
         // 결과 섹션 표시
         document.getElementById('resultSection').style.display = 'block';

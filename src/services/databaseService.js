@@ -24,6 +24,10 @@ class DatabaseService {
         mermaid_diagram TEXT,
         discussions TEXT,
         example_mapping_data TEXT,
+        ubiquitous_language_data TEXT,
+        work_tickets_data TEXT,
+        milestones_data TEXT,
+        timeline_data TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         accessed_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -34,15 +38,44 @@ class DatabaseService {
         console.error('Error creating shares table:', err);
       } else {
         console.log('Database initialized successfully');
+        // 기존 테이블에 새 컬럼 추가 (이미 존재하는 경우 무시)
+        this.addUbiquitousLanguageColumn();
+        this.addWorkTicketsColumns();
       }
+    });
+  }
+
+  addUbiquitousLanguageColumn() {
+    const sql = `
+      ALTER TABLE shares ADD COLUMN ubiquitous_language_data TEXT
+    `;
+    
+    this.db.run(sql, (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('Error adding ubiquitous_language_data column:', err);
+      }
+    });
+  }
+
+  addWorkTicketsColumns() {
+    const columns = ['work_tickets_data', 'milestones_data', 'timeline_data'];
+    
+    columns.forEach(column => {
+      const sql = `ALTER TABLE shares ADD COLUMN ${column} TEXT`;
+      
+      this.db.run(sql, (err) => {
+        if (err && !err.message.includes('duplicate column name')) {
+          console.error(`Error adding ${column} column:`, err);
+        }
+      });
     });
   }
 
   saveShare(shareId, data) {
     return new Promise((resolve, reject) => {
       const sql = `
-        INSERT INTO shares (id, prd_text, event_storming_data, mermaid_diagram, discussions, example_mapping_data)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO shares (id, prd_text, event_storming_data, mermaid_diagram, discussions, example_mapping_data, ubiquitous_language_data, work_tickets_data, milestones_data, timeline_data)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
       
       this.db.run(sql, [
@@ -51,7 +84,11 @@ class DatabaseService {
         JSON.stringify(data.eventStormingData),
         data.mermaidDiagram,
         JSON.stringify(data.discussions),
-        JSON.stringify(data.exampleMappingData)
+        JSON.stringify(data.exampleMappingData),
+        JSON.stringify(data.ubiquitousLanguageData || []),
+        JSON.stringify(data.workTicketsData || []),
+        JSON.stringify(data.milestonesData || []),
+        JSON.stringify(data.timelineData || {})
       ], (err) => {
         if (err) {
           reject(err);
@@ -83,6 +120,10 @@ class DatabaseService {
             mermaidDiagram: row.mermaid_diagram,
             discussions: JSON.parse(row.discussions),
             exampleMappingData: JSON.parse(row.example_mapping_data),
+            ubiquitousLanguageData: row.ubiquitous_language_data ? JSON.parse(row.ubiquitous_language_data) : [],
+            workTicketsData: row.work_tickets_data ? JSON.parse(row.work_tickets_data) : [],
+            milestonesData: row.milestones_data ? JSON.parse(row.milestones_data) : [],
+            timelineData: row.timeline_data ? JSON.parse(row.timeline_data) : {},
             createdAt: row.created_at
           });
         }

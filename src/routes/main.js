@@ -93,7 +93,17 @@ router.post('/api/analyze', async (req, res) => {
 
 router.post('/api/share', async (req, res) => {
     try {
-        const { prdText, eventStormingData, mermaidDiagram, discussions, exampleMappingData } = req.body;
+        const { 
+            prdText, 
+            eventStormingData, 
+            mermaidDiagram, 
+            discussions, 
+            exampleMappingData, 
+            ubiquitousLanguageData,
+            workTicketsData,
+            milestonesData,
+            timelineData
+        } = req.body;
         
         if (!prdText || !eventStormingData) {
             return res.status(400).json({ error: '공유할 데이터가 불완전합니다.' });
@@ -104,7 +114,11 @@ router.post('/api/share', async (req, res) => {
             eventStormingData,
             mermaidDiagram,
             discussions,
-            exampleMappingData
+            exampleMappingData,
+            ubiquitousLanguageData,
+            workTicketsData,
+            milestonesData,
+            timelineData
         });
 
         const shareUrl = sharingService.getShareUrl(shareId, req.protocol, req.get('host'));

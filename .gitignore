@@ -63,3 +63,4 @@ pids/
 # package-lock.json
 # yarn.lock
 /.claude
+src/data/shares.db

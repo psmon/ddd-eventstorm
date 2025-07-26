@@ -14,7 +14,11 @@ class SharingService {
       eventStormingData: analysisData.eventStormingData,
       mermaidDiagram: analysisData.mermaidDiagram,
       discussions: analysisData.discussions,
-      exampleMappingData: analysisData.exampleMappingData
+      exampleMappingData: analysisData.exampleMappingData,
+      ubiquitousLanguageData: analysisData.ubiquitousLanguageData,
+      workTicketsData: analysisData.workTicketsData,
+      milestonesData: analysisData.milestonesData,
+      timelineData: analysisData.timelineData
     };
     
     try {

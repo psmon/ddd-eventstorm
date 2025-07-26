@@ -4,7 +4,7 @@ const EventEmitter = require('events');
 class EventStormingService extends EventEmitter {
     async analyzePRD(prd, progressCallback) {
         try {
-            const totalSteps = 4;
+            const totalSteps = 6;
             let currentStep = 0;
 
             // Progress helper function
@@ -52,13 +52,35 @@ class EventStormingService extends EventEmitter {
                 discussionData
             );
 
+            // 5. 유비쿼터스 언어 정의
+            updateProgress(5, '유비쿼터스 언어 정의 중...', { phase: 'ubiquitousLanguage' });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const ubiquitousLanguage = await openaiService.generateUbiquitousLanguage(
+                eventStormingData,
+                discussionData,
+                exampleMapping
+            );
+
+            // 6. 작업 티켓 생성
+            updateProgress(6, '작업 티켓 생성 중...', { phase: 'workTickets' });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const workTickets = await openaiService.generateWorkTickets(
+                eventStormingData,
+                exampleMapping,
+                ubiquitousLanguage.ubiquitousLanguage
+            );
+
             return {
                 eventStorming: {
                     ...eventStormingData,
                     diagram
                 },
                 discussion: discussionData.discussion,
-                exampleMapping
+                exampleMapping,
+                ubiquitousLanguage: ubiquitousLanguage.ubiquitousLanguage,
+                workTickets: workTickets.workTickets,
+                milestones: workTickets.milestones,
+                timeline: workTickets.timeline
             };
         } catch (error) {
             console.error('Error in analyzePRD:', error);

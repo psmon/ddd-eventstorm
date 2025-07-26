@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script src="https://unpkg.com/konva@9/konva.min.js"></script>
     <script src="https://unpkg.com/panzoom@9.4.3/dist/panzoom.min.js"></script>
+    <link href="https://unpkg.com/vis-timeline@7.7.2/dist/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://unpkg.com/vis-timeline@7.7.2/dist/vis-timeline-graph2d.min.js"></script>
     <% if (typeof shareData !== 'undefined' && shareData) { %>
     <script>
         window.sharedAnalysisData = <%- JSON.stringify(shareData) %>;
@@ -48,6 +50,14 @@
                     <div class="progress-step" data-step="4">
                         <div class="step-icon">🗺️</div>
                         <div class="step-label">Example Mapping</div>
+                    </div>
+                    <div class="progress-step" data-step="5">
+                        <div class="step-icon">📖</div>
+                        <div class="step-label">유비쿼터스 언어</div>
+                    </div>
+                    <div class="progress-step" data-step="6">
+                        <div class="step-icon">📅</div>
+                        <div class="step-label">작업 티켓</div>
                     </div>
                 </div>
             </div>
@@ -102,6 +112,59 @@
             <div class="example-mapping-section">
                 <h2>Example Mapping</h2>
                 <div id="exampleMappingContent" class="example-mapping"></div>
+            </div>
+
+            <div class="ubiquitous-language-section">
+                <h2>유비쿼터스 언어 정의 (Ubiquitous Language)</h2>
+                <div id="ubiquitousLanguageContent" class="ubiquitous-language-content">
+                    <table class="ubiquitous-language-table" id="ubiquitousLanguageTable">
+                        <thead>
+                            <tr>
+                                <th>경계구분</th>
+                                <th>영문명</th>
+                                <th>한글명</th>
+                                <th>설명</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ubiquitousLanguageTableBody">
+                            <!-- 유비쿼터스 언어 항목들이 여기 추가됨 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="work-tickets-section">
+                <h2>작업 티켓 및 타임라인</h2>
+                
+                <div class="timeline-controls">
+                    <button onclick="zoomInTimeline()">🔍+ 확대</button>
+                    <button onclick="zoomOutTimeline()">🔍- 축소</button>
+                    <button onclick="fitTimeline()">📐 전체보기</button>
+                    <button onclick="toggleTimelineView()">🔄 보기전환</button>
+                    <select id="timelineFilter" onchange="filterTimeline()">
+                        <option value="all">모든 작업</option>
+                        <option value="sprint1">Sprint 1</option>
+                        <option value="sprint2">Sprint 2</option>
+                        <option value="high">높은 우선순위</option>
+                        <option value="feature">기능</option>
+                    </select>
+                </div>
+
+                <div id="timeline" class="timeline-container"></div>
+                
+                <div class="work-tickets-grid">
+                    <h3>작업 티켓 상세</h3>
+                    <div id="workTicketsContent" class="work-tickets-content">
+                        <!-- 작업 티켓 카드들이 여기 추가됨 -->
+                    </div>
+                </div>
+
+                <div class="milestones-section">
+                    <h3>마일스톤</h3>
+                    <div id="milestonesContent" class="milestones-content">
+                        <!-- 마일스톤이 여기 추가됨 -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
