@@ -57,17 +57,17 @@ npm run dev
 
 1. Docker 이미지 빌드
 ```bash
-docker build -t devtool-registry.lunacode.dev/ddd-event-storming .
+docker build -t registry.webnori.com/ddd-event-storming .
 ```
 
 2. Docker 푸시
 ```bash
-docker push devtool-registry.lunacode.dev/ddd-event-storming
+docker push registry.webnori.com/ddd-event-storming
 ```
 
 3. Docker 컨테이너 실행
 ```bash
-docker run -p 3000:3000 --env-file .env devtool-registry.lunacode.dev/ddd-event-storming
+docker run -p 3000:3000 --env-file .env registry.webnori.com/ddd-event-storming
 ```
 
 ## 🎯 사용 방법
