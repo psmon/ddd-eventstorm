@@ -1,5 +1,8 @@
 const OpenAI = require('openai');
 
+// 모델 설정을 상위 변수로 분리(gpt-4o, gpt-4o-mini, gpt-3.5-turbo, o3-mini, o3, )
+const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'o3-mini';
+
 class OpenAIService {
     constructor() {
         this.openai = new OpenAI({
@@ -69,12 +72,12 @@ ${prd}
             }
 
             const response = await this.openai.chat.completions.create({
-                model: "gpt-4o",
+                model: DEFAULT_MODEL,
                 messages: [
                     { role: "system", content: "당신은 DDD와 Event Storming 전문가입니다. 항상 유효한 JSON 형식으로 응답하고, 모든 내용은 한국어로 작성하세요." },
                     { role: "user", content: prompt }
                 ],
-                temperature: 0.7,
+                //temperature: 0.7,
                 response_format: { type: "json_object" }
             });
 
@@ -118,12 +121,12 @@ ${JSON.stringify(eventStorming, null, 2)}
 
         try {
             const response = await this.openai.chat.completions.create({
-                model: "gpt-4o",
+                model: DEFAULT_MODEL,
                 messages: [
                     { role: "system", content: "당신은 협업하는 소프트웨어 개발 팀의 토론을 시뮬레이션합니다. 항상 유효한 JSON 형식으로 응답하고, 모든 내용은 한국어로 작성하세요." },
                     { role: "user", content: prompt }
                 ],
-                temperature: 0.8,
+                //temperature: 0.8,
                 response_format: { type: "json_object" }
             });
 
@@ -160,19 +163,19 @@ ${JSON.stringify(discussion, null, 2)}
 }
 
 주의사항:
-1. 사용자 스토리는 "As a... I want... So that..." 형식 또는 간단한 기능 설명
+1. 사용자 스토리는 "담당자로, 원한다, 무엇을" 형식 또는 간단한 기능 설명
 2. 규칙은 명확하고 검증 가능한 비즈니스 규칙
 3. 예제는 구체적인 시나리오나 테스트 케이스
 4. 의문점은 추가 확인이 필요한 모호한 부분`;
 
         try {
             const response = await this.openai.chat.completions.create({
-                model: "gpt-4o",
+                model: DEFAULT_MODEL,
                 messages: [
                     { role: "system", content: "당신은 Example Mapping 전문가입니다. 항상 유효한 JSON 형식으로 응답하고, 모든 내용은 한국어로 작성하세요." },
                     { role: "user", content: prompt }
                 ],
-                temperature: 0.7,
+                //temperature: 0.7,
                 response_format: { type: "json_object" }
             });
 
@@ -231,12 +234,12 @@ flowchart LR
 
         try {
             const response = await this.openai.chat.completions.create({
-                model: "gpt-4o",
+                model: DEFAULT_MODEL,
                 messages: [
                     { role: "system", content: "당신은 Mermaid.js 다이어그램 전문가입니다. Mermaid v11.9.0 문법에 맞는 정확한 다이어그램을 생성하세요. 항상 유효한 JSON 형식으로 응답하세요." },
                     { role: "user", content: prompt }
                 ],
-                temperature: 0.3,
+                //temperature: 0.3,
                 response_format: { type: "json_object" }
             });
 
