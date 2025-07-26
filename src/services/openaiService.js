@@ -7,6 +7,8 @@ class OpenAIService {
     constructor() {
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
+            timeout: 120000, // 120초 타임아웃 설정
+            maxRetries: 2, // 재시도 횟수 설정
         });
         this.useMock = process.env.USE_MOCK_API === 'true';
     }
