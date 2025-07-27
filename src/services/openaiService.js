@@ -1,7 +1,7 @@
 const OpenAI = require('openai');
 
 // 모델 설정을 상위 변수로 분리(gpt-4o, gpt-4o-mini, gpt-3.5-turbo, o3-mini, o3, )
-const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'o3-mini';
+const DEFAULT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 class OpenAIService {
     constructor() {

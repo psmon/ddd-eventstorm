@@ -138,13 +138,21 @@ async function analyzePRD() {
         
         try {
             console.log('[SSE] Starting analysis request...');
+            
+            // AbortController를 사용한 타임아웃 설정
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 120000); // 120초 타임아웃
+            
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ prd: prdInput, clientId }),
+                signal: controller.signal
             });
+            
+            clearTimeout(timeoutId); // 응답이 오면 타임아웃 해제
 
             if (!response.ok) {
                 throw new Error('분석 중 오류가 발생했습니다.');
@@ -187,7 +195,11 @@ async function analyzePRD() {
         }
         eventStormingBoard.displayEventStorming(data.eventStorming);
         } catch (error) {
-            alert(error.message);
+            if (error.name === 'AbortError') {
+                alert('요청 시간이 초과되었습니다. 다시 시도해주세요.');
+            } else {
+                alert(error.message);
+            }
             eventSource.close();
         } finally {
             // 분석 완료 시 모든 단계를 완료 상태로 표시
@@ -626,13 +638,20 @@ async function shareAnalysis() {
     shareBtn.textContent = '공유 링크 생성 중...';
 
     try {
+        // AbortController를 사용한 타임아웃 설정
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
+        
         const response = await fetch('/api/share', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(currentAnalysisData),
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             throw new Error('공유 링크 생성에 실패했습니다.');
@@ -645,7 +664,11 @@ async function shareAnalysis() {
         
         shareBtn.textContent = '🔗 새 링크 생성';
     } catch (error) {
-        alert(error.message);
+        if (error.name === 'AbortError') {
+            alert('요청 시간이 초과되었습니다. 다시 시도해주세요.');
+        } else {
+            alert(error.message);
+        }
         shareBtn.textContent = '🔗 공유하기';
     } finally {
         shareBtn.disabled = false;
